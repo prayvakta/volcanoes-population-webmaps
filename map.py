@@ -13,7 +13,7 @@ html = """
         Height: %s m
         """
 
-def pick_color(elevation):
+def elev_color(elevation):
     if elevation < 1000:
         return 'green'
     elif elevation < 3000:
@@ -21,16 +21,32 @@ def pick_color(elevation):
     else:
         return 'red'
 
+def pop_color(pop):
+    if pop < 10000000:
+        return 'green'
+    elif pop < 100000000:
+        return 'orange'
+    else:
+        return 'red'
+
 usa_map = folium.Map(location=[40, -100], zoom_start=4, tiles='Stamen Terrain')
+
+fg = folium.FeatureGroup(name='My Map')
 
 for lt, ln, el, name in zip(lat, lon, elv, nm):
     iframe = folium.IFrame(html=html % (name, name, el), width=200, height=80)
-    folium.CircleMarker(
+    markers = folium.CircleMarker(
         location = [lt, ln],
         popup=folium.Popup(iframe),
         radius=5,
         stroke=False,
         fill_opacity=0.7,
-        fill_color=pick_color(el)).add_to(usa_map)
+        fill_color=elev_color(el))
+    fg.add_child(markers)
+
+fg.add_child(folium.GeoJson(data=(open('world.json', 'r', encoding='utf-8-sig').read()),
+    style_function= lambda x: {'fillColor': pop_color(x['properties']['POP2005'])}))
+
+usa_map.add_child(fg)
 
 usa_map.save('index.html')
